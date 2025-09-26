@@ -1,10 +1,12 @@
 package steam;
 
+import steam.Screens.Principal;
+
 public class Steam {
 
     public static void main(String[] args) {
         
-        System.out.println("Viva choloma!");
+        new Principal().setVisible(true);
         
     }
     

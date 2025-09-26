@@ -53,7 +53,6 @@ public class Principal extends JFrame {
         salir.setFocusPainted(false);
         salir.addActionListener(e -> salirAction());
 
-        // Agregar componentes al panel
         panel.add(titulo);
         panel.add(iniciarSesion);
         panel.add(registrarse);
@@ -62,8 +61,8 @@ public class Principal extends JFrame {
     }
 
     private void iniciarSesionAction() {
-        // new Login().setVisible(true);
-        // dispose();
+        new Loguin().setVisible(true);
+        dispose();
     }
 
     private void registrarseAction() {
@@ -87,7 +86,7 @@ public class Principal extends JFrame {
     }
 
     private final JLabel titulo = new JLabel();
-    private final JButton iniciarSesion = new JButton("INICIAR SESIÓN");
+    private final JButton iniciarSesion = new JButton("INICIAR SESION");
     private final JButton registrarse = new JButton("REGISTRARSE");
     private final JButton salir = new JButton("SALIR");
     private final JPanel panel = new JPanel() {
