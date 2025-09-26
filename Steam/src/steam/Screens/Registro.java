@@ -32,46 +32,49 @@ public class Registro extends JFrame {
         titulo.setForeground(Color.WHITE);
         titulo.setHorizontalAlignment(SwingConstants.CENTER);
 
-        codeText.setBounds(50, 100, 300, 30);
-        codeText.setText("CÓDIGO:");
-        codeText.setFont(new Font("Arial", Font.BOLD, 18));
-        codeText.setForeground(Color.WHITE);
-
-        codeField.setBounds(50, 135, 300, 40);
-        codeField.setFont(new Font("Arial", Font.PLAIN, 16));
-
-        userText.setBounds(50, 190, 300, 30);
+        userText.setBounds(50, 100, 300, 30);
         userText.setText("USERNAME:");
         userText.setFont(new Font("Arial", Font.BOLD, 18));
         userText.setForeground(Color.WHITE);
 
-        username.setBounds(50, 225, 300, 40);
+        username.setBounds(50, 135, 300, 40);
         username.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        passText.setBounds(50, 280, 300, 30);
+        passText.setBounds(50, 190, 300, 30);
         passText.setText("PASSWORD:");
         passText.setFont(new Font("Arial", Font.BOLD, 18));
         passText.setForeground(Color.WHITE);
 
-        password.setBounds(50, 315, 300, 40);
+        password.setBounds(50, 225, 300, 40);
         password.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        nombreText.setBounds(50, 370, 300, 30);
+        nombreText.setBounds(50, 280, 300, 30);
         nombreText.setText("NOMBRE COMPLETO:");
         nombreText.setFont(new Font("Arial", Font.BOLD, 18));
         nombreText.setForeground(Color.WHITE);
 
-        nombre.setBounds(50, 405, 300, 40);
+        nombre.setBounds(50, 315, 300, 40);
         nombre.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        nacimientoText.setBounds(50, 460, 300, 30);
+        nacimientoText.setBounds(50, 370, 300, 30);
         nacimientoText.setText("FECHA DE NACIMIENTO:");
         nacimientoText.setFont(new Font("Arial", Font.BOLD, 18));
         nacimientoText.setForeground(Color.WHITE);
 
-        dateChooser.setBounds(50, 495, 300, 40);
+        dateChooser.setBounds(50, 405, 300, 40);
         dateChooser.setFont(new Font("Arial", Font.PLAIN, 16));
         dateChooser.setDateFormatString("dd/MM/yyyy");
+        
+        tipoUserText.setBounds(50, 460, 300, 30);
+        tipoUserText.setText("TIPO DE USUARIO:");
+        tipoUserText.setFont(new Font("Arial", Font.BOLD, 18));
+        tipoUserText.setForeground(Color.white);
+
+        tipoUsuario.setBounds(50, 495, 300, 40);
+        tipoUsuario.setFont(new Font("Arial", Font.PLAIN, 16));
+        
+        tipoUsuario.addItem("Normal");
+        tipoUsuario.addItem("Administrador");
 
         imagenPanel.setBounds(493, 160, 270, 270);
         imagenPanel.setBackground(new Color(255, 255, 255, 50));
@@ -107,8 +110,6 @@ public class Registro extends JFrame {
         regresar.addActionListener(e -> regresarAction());
 
         panel.add(titulo);
-        panel.add(codeText);
-        panel.add(codeField);
         panel.add(userText);
         panel.add(username);
         panel.add(passText);
@@ -117,6 +118,8 @@ public class Registro extends JFrame {
         panel.add(nombre);
         panel.add(nacimientoText);
         panel.add(dateChooser);
+        panel.add(tipoUserText);
+        panel.add(tipoUsuario);
         panel.add(imagenPanel);
         panel.add(seleccionarImagen);
         panel.add(crearCuenta);
@@ -158,7 +161,6 @@ public class Registro extends JFrame {
 
     private void crearCuentaAction() {
         try {
-            int code = Integer.parseInt(codeField.getText());
             String usernameStr = username.getText();
             String pass = new String(password.getPassword());
             String nombreStr = nombre.getText();
@@ -170,7 +172,7 @@ public class Registro extends JFrame {
                 nacimientoLong = fechaNacimiento.getTime();
             }
 
-            if (codeField.getText().isEmpty() || usernameStr.isEmpty()
+            if (usernameStr.isEmpty()
                     || pass.isEmpty() || nombreStr.isEmpty() || fechaNacimiento == null) {
                 JOptionPane.showMessageDialog(this,
                         "Debe de llenar todos los campos!",
@@ -210,7 +212,6 @@ public class Registro extends JFrame {
     }
 
     private void limpiarCampos() {
-        codeField.setText("");
         username.setText("");
         password.setText("");
         nombre.setText("");
@@ -218,6 +219,7 @@ public class Registro extends JFrame {
         imagenLabel.setIcon(null);
         imagenLabel.setText("<html><center>IMAGEN<br>SELECCIONADA</center></html>");
         imagenSeleccionada = null;
+        tipoUsuario.setSelectedIndex(0);
     }
 
     private void regresarAction() {
@@ -226,12 +228,11 @@ public class Registro extends JFrame {
     }
 
     private final JLabel titulo = new JLabel();
-    private final JLabel codeText = new JLabel();
     private final JLabel userText = new JLabel();
     private final JLabel passText = new JLabel();
     private final JLabel nombreText = new JLabel();
     private final JLabel nacimientoText = new JLabel();
-    private final JTextField codeField = new JTextField();
+    private final JLabel tipoUserText = new JLabel();
     private final JTextField username = new JTextField();
     private final JPasswordField password = new JPasswordField();
     private final JTextField nombre = new JTextField();
@@ -239,6 +240,7 @@ public class Registro extends JFrame {
     private final JButton crearCuenta = new JButton("CREAR CUENTA");
     private final JButton regresar = new JButton("REGRESAR");
     private final JButton seleccionarImagen = new JButton("SELECCIONAR IMAGEN DE PERFIL");
+    private final JComboBox<String> tipoUsuario = new JComboBox<>();
     private final JPanel imagenPanel = new JPanel();
     private final JLabel imagenLabel = new JLabel();
     private File imagenSeleccionada = null;
