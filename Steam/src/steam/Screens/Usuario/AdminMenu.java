@@ -18,7 +18,7 @@ public class AdminMenu extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(null);
-    }//a
+    }//assdsd
 
     private void initComponentes() {
         panel.setSize(700, 600);
