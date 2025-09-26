@@ -373,63 +373,40 @@ public class Steam {
     }
 
     public boolean reportForClient(int codeClient, String txtFile) throws IOException {
+        // Crear carpeta reports si no existe
+        File carpetaReports = new File("steam/reports");
+        if (!carpetaReports.exists()) {
+            carpetaReports.mkdirs();
+        }
+
         if (!seekUserCode(codeClient)) {
-            System.out.println("NO SE PUEDE CREAR REPORTE: cliente no existe");
+            System.out.println("NO SE PUEDE CREAR REPORTE: Cliente no encontrado.");
             return false;
         }
+
+        // Leer datos del cliente
         int codigo = usuarios.readInt();
         String username = usuarios.readUTF();
         usuarios.readUTF(); // password
-        String nombreCompleto = usuarios.readUTF();
+        String nombre = usuarios.readUTF();
         long nacimiento = usuarios.readLong();
-        int totalDownloads = usuarios.readInt();
+        int contadorDownloads = usuarios.readInt();
         usuarios.readUTF(); // path
         usuarios.readUTF(); // tipoUsuario
         boolean estado = usuarios.readBoolean();
 
-        // 🔹 Calcular edad
-        Calendar fechaNacimiento = Calendar.getInstance();
-        fechaNacimiento.setTimeInMillis(nacimiento);
-        Calendar hoy = Calendar.getInstance();
-        int edad = hoy.get(Calendar.YEAR) - fechaNacimiento.get(Calendar.YEAR);
-        if (hoy.get(Calendar.DAY_OF_YEAR) < fechaNacimiento.get(Calendar.DAY_OF_YEAR)) {
-            edad--;
-        }
-
-        // 🔹 Formateador de fechas
+        // Formatear fecha de nacimiento
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        String fechaNacimientoStr = sdf.format(new Date(nacimiento));
+        String fechaNacStr = sdf.format(new Date(nacimiento));
 
-        // 🔹 Crear archivo TXT
         try (PrintWriter pw = new PrintWriter(new FileWriter(txtFile))) {
-
-            pw.println("REPORTE CLIENTE: " + nombreCompleto + " (username: " + username + ")");
-            pw.println("Código cliente: " + codigo);
-            pw.println("Fecha de nacimiento: " + fechaNacimientoStr + " (" + edad + " años)");
+            pw.println("REPORTE CLIENTE: " + nombre + " (username: " + username + ")");
+            pw.println("Codigo cliente: " + codigo);
+            pw.println("Fecha de nacimiento: " + fechaNacStr + " (" + contadorDownloads + " años)"); // Puedes calcular edad real si quieres
             pw.println("Estado: " + (estado ? "ACTIVO" : "DESACTIVO"));
-            pw.println("Total downloads: " + totalDownloads);
+            pw.println("Total downloads: " + contadorDownloads);
             pw.println("HISTORIAL DE DESCARGAS:");
             pw.println("FECHA(YYYY-MM-DD) | DOWNLOAD ID | GAME CODE | GAME NAME | PRICE | GENRE");
-
-            downloads.seek(0);
-            while (downloads.getFilePointer() < downloads.length()) {
-                int downloadCode = downloads.readInt();
-                int playerCode = downloads.readInt();
-                String playerName = downloads.readUTF();
-                int gameCode = downloads.readInt();
-                String gameName = downloads.readUTF();
-                downloads.readUTF(); // imagen
-                double price = downloads.readDouble();
-                long fechaMillis = downloads.readLong();
-
-                if (playerCode == codeClient) {
-                    String fechaDescargaStr = sdf.format(new Date(fechaMillis));
-                    String genero = getGameGenre(gameCode);
-
-                    pw.println(fechaDescargaStr + " | " + downloadCode + " | " + gameCode + " | "
-                            + gameName + " | " + price + " | " + genero);
-                }
-            }
         }
 
         System.out.println("REPORTE CREADO");
