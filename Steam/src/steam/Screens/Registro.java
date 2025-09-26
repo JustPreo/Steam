@@ -106,12 +106,12 @@ public class Registro extends JFrame {
         password.setText("");
         tipoUsuario.setSelectedIndex(0);
 
-        new Principal().setVisible(true);
+        new Main().setVisible(true);
         dispose();
     }
 
     private void regresarAction() {
-        new Principal().setVisible(true);
+        new Main().setVisible(true);
         dispose();
 
     }

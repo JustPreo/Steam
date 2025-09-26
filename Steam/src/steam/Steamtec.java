@@ -1,12 +1,12 @@
 package steam;
 
-import steam.Screens.Principal;
+import steam.Screens.Main;
 
-public class Main {
+public class Steamtec {
 
     public static void main(String[] args) {
         
-        new Principal().setVisible(true);
+        new Main().setVisible(true);
         
     }
     

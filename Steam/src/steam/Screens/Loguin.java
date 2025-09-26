@@ -97,7 +97,7 @@ public class Loguin extends JFrame {
     }
 
     private void regresarAction() {
-        new Principal().setVisible(true);
+        new Main().setVisible(true);
         dispose();
     }
 

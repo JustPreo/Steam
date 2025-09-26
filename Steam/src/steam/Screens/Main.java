@@ -3,9 +3,9 @@ package steam.Screens;
 import java.awt.*;
 import javax.swing.*;
 
-public class Principal extends JFrame {
+public class Main extends JFrame {
 
-    public Principal() {
+    public Main() {
         initVentana();
         initComponentes();
     }
@@ -101,6 +101,6 @@ public class Principal extends JFrame {
     };
 
     public static void main(String[] args) {
-        new Principal().setVisible(true);
+        new Main().setVisible(true);
     }
 }
