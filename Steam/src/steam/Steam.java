@@ -168,7 +168,7 @@ public class Steam {
         if (!seekGame(gameCode)) {
             System.out.println("El juego no existe");
             return false;
-        }
+        }//sdsd
 
         long posInicioGame = games.getFilePointer(); // Guardar pos para luego actualizar contador
         games.readInt(); // code
