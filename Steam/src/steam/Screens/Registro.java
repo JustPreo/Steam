@@ -93,6 +93,7 @@ public class Registro extends JFrame {
         add(panel);
     }
 
+    //aa
     private void crearCuentaAction() {
         String user = usuario.getText();
         String pass = new String(password.getPassword());
