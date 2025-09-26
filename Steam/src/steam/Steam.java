@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package steam;
 
 import java.io.File;
@@ -293,7 +289,7 @@ public class Steam {
 
     }
 
-    private boolean seekUserCode(int code) throws IOException {//Lo mismo que arriba pero con codigo
+    public boolean seekUserCode(int code) throws IOException {//Lo mismo que arriba pero con codigo
         usuarios.seek(0);
         while (usuarios.getFilePointer() < usuarios.length()) {
             long pos = usuarios.getFilePointer();
@@ -312,6 +308,18 @@ public class Steam {
             usuarios.readBoolean(); // estado
         }
         return false;
+    }
+    
+    // --- NUEVO MÉTODO AÑADIDO ---
+    public int getUserCode(String username) throws IOException {
+        // Busca al usuario por su nombre de usuario.
+        // El método seekUser ya deja el puntero al inicio del registro si lo encuentra.
+        if (seekUser(username)) {
+            // Lee el primer campo del registro, que es el código (int).
+            return usuarios.readInt();
+        }
+        // Si no se encuentra el usuario, retorna un valor inválido como -1.
+        return -1;
     }
 
     public boolean login(String username, String password) throws IOException {
