@@ -15,20 +15,51 @@ import java.io.RandomAccessFile;
 public class generadorArchivos {
 
     RandomAccessFile codigos;
+    RandomAccessFile games;
+    RandomAccessFile usuarios;
     File file;
 
     /*
-    Formato:
+    Formato:codigos
         juegos int
         clientes int 
         downloads int
-    
-    
      */
+    
+    /*
+    Formato:games
+        int code;
+        String titulo
+        String genero;
+        char sistemaOperativo
+        int edadMinima
+        double precio
+        int contadorDownloads
+        String path;//para la foto
+        
+    
+    */
+    
+    /*
+    Formato: player
+        int code
+        String username
+        String password
+        String nombre
+        long nacimiento //Fecha en milisegundos
+        int contadorDownloads
+        string path
+        String tipoUsuario //ADMIN O NORMAL
+        bool estado --
+        
+    
+    */
     public generadorArchivos() {
         try {
             inicializarCarpeta();
             codigos = new RandomAccessFile("steam/codes.stm", "rw");
+            games = new RandomAccessFile("steam/games.stm", "rw");
+            usuarios = new RandomAccessFile("steam/usuarios.stm", "rw");
             initCodes();
 
         } catch (IOException e) {
@@ -38,7 +69,7 @@ public class generadorArchivos {
 
     }
 
-    public void inicializarCarpeta() {
+    private void inicializarCarpeta() {
         file = new File("steam");
         if (!file.exists()) {
             file.mkdir();
@@ -46,13 +77,37 @@ public class generadorArchivos {
 
     }
 
-    public void initCodes() throws IOException {
+    private void initCodes() throws IOException {
         if (codigos.length() == 0) {
             codigos.writeInt(1);//Juegos
             codigos.writeInt(1);//Clientes
             codigos.writeInt(1);//Downloads globales supongo
-            
         }
+    }
+    
+    private int getCode() throws IOException
+    {
+    codigos.seek(0);//Inicio archivo
+    int code = codigos.readInt();
+    codigos.seek(0);
+    codigos.writeInt(code+1);
+    return code;
+    }
+    
+    public void crearUsuario(String username,String password,String nombre,long nacimiento,String path,char tipoUsuario) throws IOException
+    {
+        //Lo pone al final del archivo
+        usuarios.seek(usuarios.length());//Pone al final del archivo
+        usuarios.writeInt(getCode());
+        usuarios.writeUTF(username);
+        usuarios.writeUTF(password);
+        usuarios.writeUTF(nombre);
+        usuarios.writeLong(nacimiento);
+        usuarios.writeInt(0);//Supongo que cantidad de descargas
+        usuarios.writeUTF(path);
+        usuarios.writeChar(tipoUsuario);
+        usuarios.writeBoolean(true);//Activo o inactivo el usuario
+    
     }
 
 }
