@@ -25,8 +25,7 @@ public class generadorArchivos {
         clientes int 
         downloads int
      */
-    
-    /*
+ /*
     Formato:games
         int code;
         String titulo
@@ -38,9 +37,8 @@ public class generadorArchivos {
         String path;//para la foto
         
     
-    */
-    
-    /*
+     */
+ /*
     Formato: player
         int code
         String username
@@ -53,7 +51,7 @@ public class generadorArchivos {
         bool estado --
         
     
-    */
+     */
     public generadorArchivos() {
         try {
             inicializarCarpeta();
@@ -84,18 +82,16 @@ public class generadorArchivos {
             codigos.writeInt(1);//Downloads globales supongo
         }
     }
-    
-    private int getCode() throws IOException
-    {
-    codigos.seek(0);//Inicio archivo
-    int code = codigos.readInt();
-    codigos.seek(0);
-    codigos.writeInt(code+1);
-    return code;
+
+    private int getCode() throws IOException {
+        codigos.seek(0);//Inicio archivo
+        int code = codigos.readInt();
+        codigos.seek(0);
+        codigos.writeInt(code + 1);
+        return code;
     }
-    
-    public void crearUsuario(String username,String password,String nombre,long nacimiento,String path,char tipoUsuario) throws IOException
-    {
+
+    public void crearUsuario(String username, String password, String nombre, long nacimiento, String path, char tipoUsuario) throws IOException {
         //Lo pone al final del archivo
         usuarios.seek(usuarios.length());//Pone al final del archivo
         usuarios.writeInt(getCode());
@@ -107,7 +103,22 @@ public class generadorArchivos {
         usuarios.writeUTF(path);
         usuarios.writeChar(tipoUsuario);
         usuarios.writeBoolean(true);//Activo o inactivo el usuario
-    
     }
+
+    private boolean seekUser(String username) throws IOException {
+        usuarios.seek(0);//Principio
+        long pos = 0;
+        while (usuarios.getFilePointer() < usuarios.length()) {
+            pos = usuarios.getFilePointer();
+            usuarios.readInt();
+            if (usuarios.readUTF().equalsIgnoreCase(username)) {
+                usuarios.seek(pos);
+                return true;
+            }
+        }
+        return false;
+
+    }
+    
 
 }
