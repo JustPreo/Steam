@@ -36,11 +36,6 @@ public class Registro extends JFrame {
 
         usuario.setBounds(200, 185, 300, 40);
         usuario.setFont(new Font("Arial", Font.PLAIN, 16));
-        usuario.setBackground(new Color(255, 255, 255, 200));
-        usuario.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(70, 130, 180), 2),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
 
         passText.setBounds(200, 250, 300, 30);
         passText.setText("CONTRASEÑA:");
@@ -49,11 +44,6 @@ public class Registro extends JFrame {
 
         password.setBounds(200, 285, 300, 40);
         password.setFont(new Font("Arial", Font.PLAIN, 16));
-        password.setBackground(new Color(255, 255, 255, 200));
-        password.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(70, 130, 180), 2),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
 
         tipoUserText.setBounds(200, 340, 300, 30);
         tipoUserText.setText("TIPO DE USUARIO:");
