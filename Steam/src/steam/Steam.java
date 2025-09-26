@@ -5,8 +5,14 @@
 package steam;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  *
@@ -72,6 +78,10 @@ public class Steam {
         if (!file.exists()) {
             file.mkdirs();
         }
+        File reports = new File("steam/reports");
+        if (!reports.exists()) {
+            reports.mkdirs();
+        }
 
     }
 
@@ -80,9 +90,9 @@ public class Steam {
         if (seekUser(username)) {
             return false;
         }
-
+        int code = getCode();
         usuarios.seek(usuarios.length());//Pone al final del archivo
-        usuarios.writeInt(getCode());
+        usuarios.writeInt(code);
         usuarios.writeUTF(username);
         usuarios.writeUTF(password);
         usuarios.writeUTF(nombre);
@@ -91,6 +101,21 @@ public class Steam {
         usuarios.writeUTF(path);
         usuarios.writeUTF(tipoUsuario);
         usuarios.writeBoolean(true);//Activo o inactivo el usuario
+
+        // Crea el archivo 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String fechaNac = sdf.format(new Date(nacimiento));
+
+        String nombreArchivo = "steam/reports/client_" + code + ".txt";
+        try (PrintWriter pw = new PrintWriter(new FileWriter(nombreArchivo))) {
+            pw.println("REPORTE CLIENTE: " + nombre + " (username: " + username + ")");
+            pw.println("Código cliente: " + code);
+            pw.println("Fecha de nacimiento: " + fechaNac);
+            pw.println("Estado: ACTIVO");
+            pw.println("Total downloads: 0");
+            pw.println("HISTORIAL DE DESCARGAS:");
+            pw.println("FECHA(YYYY-MM-DD) | DOWNLOAD ID | GAME CODE | GAME NAME | PRICE | GENRE");
+        }
 
         return true;
     }
@@ -142,94 +167,103 @@ public class Steam {
 
     }
 
-    
     public boolean downloadGame(int gameCode, int clientCode, char sistemaOperativoCliente) throws IOException {
-    // Verificar que el juego exista
-    if (!seekGame(gameCode)) {
-        System.out.println("El juego no existe");
-        return false;
+        // Verificar que el juego exista
+        if (!seekGame(gameCode)) {
+            System.out.println("El juego no existe");
+            return false;
+        }
+
+        long posInicioGame = games.getFilePointer(); // Guardar pos para luego actualizar contador
+        games.readInt(); // code
+        String tituloJuego = games.readUTF();
+        games.readUTF(); // genero
+        char osJuego = games.readChar();
+        int edadMinima = games.readInt();
+        double precio = games.readDouble();
+        long posContadorGame = games.getFilePointer(); // Para actualizar luego
+        int contadorGame = games.readInt();
+        String pathImagen = games.readUTF(); // ruta de imagen
+
+        // Verificar compatibilidad del sistema operativo
+        if (osJuego != sistemaOperativoCliente) {
+            System.out.println("El juego no es compatible con el sistema operativo del cliente");
+            return false;
+        }
+
+        // Verificar que el cliente exista
+        if (!seekUserCode(clientCode)) {
+            System.out.println("El cliente no existe");
+            return false;
+        }
+
+        long posInicioUser = usuarios.getFilePointer(); // Guardar pos para actualizar contador
+        usuarios.readInt(); // code
+        String username = usuarios.readUTF();
+        usuarios.readUTF(); // password
+        String nombre = usuarios.readUTF();
+        long nacimiento = usuarios.readLong();
+        long posContadorUser = usuarios.getFilePointer(); // Para actualizar luego
+        int contadorUser = usuarios.readInt();
+        usuarios.readUTF(); // path
+        usuarios.readUTF(); // tipoUsuario
+        boolean estado = usuarios.readBoolean();
+
+        if (!estado) {
+            System.out.println("El usuario está inactvio");
+            return false;
+        }
+
+        // Verificar edad mínima
+        long edadMilis = System.currentTimeMillis() - nacimiento;
+        int edadAnios = (int) (edadMilis / (1000L * 60 * 60 * 24 * 365));
+        if (edadAnios < edadMinima) {
+            System.out.println("El usuario no cumple la edad minima requerida (" + edadMinima + ")");
+            return false;
+        }
+
+        // Si todo se cumple, crear el archivo de descarga
+        int downloadCode = getDownloadsGlobales(); // Genera code
+        String nombreArchivo = "steam/downloads/download_" + downloadCode + ".stm";
+        File fileDescarga = new File(nombreArchivo);
+
+        RandomAccessFile downloadFile = new RandomAccessFile(fileDescarga, "rw");
+        long fechaActual = System.currentTimeMillis();
+
+        downloadFile.writeInt(downloadCode);
+        downloadFile.writeInt(clientCode);
+        downloadFile.writeUTF(nombre);
+        downloadFile.writeInt(gameCode);
+        downloadFile.writeUTF(tituloJuego);
+        downloadFile.writeUTF(pathImagen); // Guardamos el path de la imagen
+        downloadFile.writeDouble(precio);
+        downloadFile.writeLong(fechaActual);
+        downloadFile.close();
+
+        // Actualizar contador de descargas del juego
+        games.seek(posContadorGame);
+        games.writeInt(contadorGame + 1);
+
+        // Actualizar contador de descargas del usuario
+        usuarios.seek(posContadorUser);
+        usuarios.writeInt(contadorUser + 1);
+
+        System.out.println("Descarga generada correctamente: " + nombreArchivo);
+        System.out.println("Download numero " + downloadCode + " | " + nombre + " descargaste " + tituloJuego + " a $" + precio);
+
+        String archivoReporte = "steam/reports/client_" + clientCode + ".txt";
+        File f = new File(archivoReporte);
+        if (f.exists()) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String fechaStr = sdf.format(new Date(fechaActual));
+            String genero = getGameGenre(gameCode);
+
+            try (FileWriter fw = new FileWriter(f, true); PrintWriter pw = new PrintWriter(fw)) {
+                pw.println(fechaStr + " | " + downloadCode + " | " + gameCode + " | " + tituloJuego + " | " + precio + " | " + genero);
+            }
+        }
+        return true;
     }
-    
-    long posInicioGame = games.getFilePointer(); // Guardar pos para luego actualizar contador
-    games.readInt(); // code
-    String tituloJuego = games.readUTF();
-    games.readUTF(); // genero
-    char osJuego = games.readChar();
-    int edadMinima = games.readInt();
-    double precio = games.readDouble();
-    long posContadorGame = games.getFilePointer(); // Para actualizar luego
-    int contadorGame = games.readInt();
-    String pathImagen = games.readUTF(); // ruta de imagen
-
-    // Verificar compatibilidad del sistema operativo
-    if (osJuego != sistemaOperativoCliente) {
-        System.out.println("El juego no es compatible con el sistema operativo del cliente");
-        return false;
-    }
-
-    // Verificar que el cliente exista
-    if (!seekUserCode(clientCode)) {
-        System.out.println("El cliente no existe.");
-        return false;
-    }
-
-    long posInicioUser = usuarios.getFilePointer(); // Guardar pos para actualizar contador
-    usuarios.readInt(); // code
-    String username = usuarios.readUTF();
-    usuarios.readUTF(); // password
-    String nombre = usuarios.readUTF();
-    long nacimiento = usuarios.readLong();
-    long posContadorUser = usuarios.getFilePointer(); // Para actualizar luego
-    int contadorUser = usuarios.readInt();
-    usuarios.readUTF(); // path
-    usuarios.readUTF(); // tipoUsuario
-    boolean estado = usuarios.readBoolean();
-
-    if (!estado) {
-        System.out.println("El usuario está inactvio");
-        return false;
-    }
-
-    // Verificar edad mínima
-    long edadMilis = System.currentTimeMillis() - nacimiento;
-    int edadAnios = (int) (edadMilis / (1000L * 60 * 60 * 24 * 365));
-    if (edadAnios < edadMinima) {
-        System.out.println("El usuario no cumple la edad minima requerida (" + edadMinima + ")");
-        return false;
-    }
-
-    // Si todo se cumple, crear el archivo de descarga
-    int downloadCode = getDownloadsGlobales(); // Genera code
-    String nombreArchivo = "steam/downloads/download_" + downloadCode + ".stm";
-    File fileDescarga = new File(nombreArchivo);
-
-    RandomAccessFile downloadFile = new RandomAccessFile(fileDescarga, "rw");
-    long fechaActual = System.currentTimeMillis();
-
-    downloadFile.writeInt(downloadCode);
-    downloadFile.writeInt(clientCode);
-    downloadFile.writeUTF(nombre);
-    downloadFile.writeInt(gameCode);
-    downloadFile.writeUTF(tituloJuego);
-    downloadFile.writeUTF(pathImagen); // Guardamos el path de la imagen
-    downloadFile.writeDouble(precio);
-    downloadFile.writeLong(fechaActual);
-    downloadFile.close();
-
-    // Actualizar contador de descargas del juego
-    games.seek(posContadorGame);
-    games.writeInt(contadorGame + 1);
-
-    // Actualizar contador de descargas del usuario
-    usuarios.seek(posContadorUser);
-    usuarios.writeInt(contadorUser + 1);
-
-    System.out.println("Descarga generada correctamente: " + nombreArchivo);
-    System.out.println("Download numero " + downloadCode + " | " + nombre + " descargaste " + tituloJuego + " a $" + precio);
-    return true;
-}
-    
-    
 
     private boolean seekUser(String username) throws IOException {
         usuarios.seek(0);//Principio
@@ -256,27 +290,27 @@ public class Steam {
         return false;
 
     }
-    
+
     private boolean seekUserCode(int code) throws IOException {//Lo mismo que arriba pero con codigo
-    usuarios.seek(0);
-    while (usuarios.getFilePointer() < usuarios.length()) {
-        long pos = usuarios.getFilePointer();
-        int current = usuarios.readInt();
-        if (current == code) {
-            usuarios.seek(pos);
-            return true;
+        usuarios.seek(0);
+        while (usuarios.getFilePointer() < usuarios.length()) {
+            long pos = usuarios.getFilePointer();
+            int current = usuarios.readInt();
+            if (current == code) {
+                usuarios.seek(pos);
+                return true;
+            }
+            usuarios.readUTF(); // username
+            usuarios.readUTF(); // password
+            usuarios.readUTF(); // nombre
+            usuarios.readLong(); // nacimiento
+            usuarios.readInt(); // contador
+            usuarios.readUTF(); // path
+            usuarios.readUTF(); // tipo
+            usuarios.readBoolean(); // estado
         }
-        usuarios.readUTF(); // username
-        usuarios.readUTF(); // password
-        usuarios.readUTF(); // nombre
-        usuarios.readLong(); // nacimiento
-        usuarios.readInt(); // contador
-        usuarios.readUTF(); // path
-        usuarios.readUTF(); // tipo
-        usuarios.readBoolean(); // estado
+        return false;
     }
-    return false;
-}
 
     public boolean login(String username, String password) throws IOException {
         if (seekUser(username)) {
@@ -322,8 +356,105 @@ public class Steam {
             usuarios.writeBoolean(!bool);//lo opuesto a bool
         }
     }
-    
-    
+
+    public boolean updatePriceFor(int codeGame, double newPrice) throws IOException {
+        if (seekGame(codeGame))//Si encuentra el juego
+        {
+            games.readInt();//Code
+            games.readUTF();//TITULO
+            games.readUTF();//GENERO
+            games.readChar();//OS
+            games.readInt();//EDADMINIMA
+            games.writeDouble(newPrice);
+            return true;
+        }
+        return false;
+
+    }
+
+    public boolean reportForClient(int codeClient, String txtFile) throws IOException {
+        if (!seekUserCode(codeClient)) {
+            System.out.println("NO SE PUEDE CREAR REPORTE: cliente no existe");
+            return false;
+        }
+        int codigo = usuarios.readInt();
+        String username = usuarios.readUTF();
+        usuarios.readUTF(); // password
+        String nombreCompleto = usuarios.readUTF();
+        long nacimiento = usuarios.readLong();
+        int totalDownloads = usuarios.readInt();
+        usuarios.readUTF(); // path
+        usuarios.readUTF(); // tipoUsuario
+        boolean estado = usuarios.readBoolean();
+
+        // 🔹 Calcular edad
+        Calendar fechaNacimiento = Calendar.getInstance();
+        fechaNacimiento.setTimeInMillis(nacimiento);
+        Calendar hoy = Calendar.getInstance();
+        int edad = hoy.get(Calendar.YEAR) - fechaNacimiento.get(Calendar.YEAR);
+        if (hoy.get(Calendar.DAY_OF_YEAR) < fechaNacimiento.get(Calendar.DAY_OF_YEAR)) {
+            edad--;
+        }
+
+        // 🔹 Formateador de fechas
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String fechaNacimientoStr = sdf.format(new Date(nacimiento));
+
+        // 🔹 Crear archivo TXT
+        try (PrintWriter pw = new PrintWriter(new FileWriter(txtFile))) {
+
+            pw.println("REPORTE CLIENTE: " + nombreCompleto + " (username: " + username + ")");
+            pw.println("Código cliente: " + codigo);
+            pw.println("Fecha de nacimiento: " + fechaNacimientoStr + " (" + edad + " años)");
+            pw.println("Estado: " + (estado ? "ACTIVO" : "DESACTIVO"));
+            pw.println("Total downloads: " + totalDownloads);
+            pw.println("HISTORIAL DE DESCARGAS:");
+            pw.println("FECHA(YYYY-MM-DD) | DOWNLOAD ID | GAME CODE | GAME NAME | PRICE | GENRE");
+
+            downloads.seek(0);
+            while (downloads.getFilePointer() < downloads.length()) {
+                int downloadCode = downloads.readInt();
+                int playerCode = downloads.readInt();
+                String playerName = downloads.readUTF();
+                int gameCode = downloads.readInt();
+                String gameName = downloads.readUTF();
+                downloads.readUTF(); // imagen
+                double price = downloads.readDouble();
+                long fechaMillis = downloads.readLong();
+
+                if (playerCode == codeClient) {
+                    String fechaDescargaStr = sdf.format(new Date(fechaMillis));
+                    String genero = getGameGenre(gameCode);
+
+                    pw.println(fechaDescargaStr + " | " + downloadCode + " | " + gameCode + " | "
+                            + gameName + " | " + price + " | " + genero);
+                }
+            }
+        }
+
+        System.out.println("REPORTE CREADO");
+        return true;
+    }
+
+    private String getGameGenre(int gameCode) throws IOException {
+        games.seek(0);
+        while (games.getFilePointer() < games.length()) {
+            int code = games.readInt();
+            String title = games.readUTF();
+            String genre = games.readUTF();
+            games.readChar(); // os
+            games.readInt(); // edad
+            games.readDouble(); // price
+            games.readInt(); // contador
+            games.readUTF(); // path
+
+            if (code == gameCode) {
+                return genre;
+            }
+        }
+        return "N/A";
+    }
+
     private int getCode() throws IOException {
         codigos.seek(1);//
         int code = codigos.readInt();
@@ -347,15 +478,15 @@ public class Steam {
         codigos.writeInt(code + 1);
         return code;
     }
-    
+
     public char getSistemaOperativo(int code) throws IOException {
-    if (seekGame(code)) { // Si lo encuentra, el puntero queda al inicio del registro
-        games.readInt();       // code
-        games.readUTF();       // título
-        games.readUTF();       // género
-        return games.readChar(); // sistema operativo
+        if (seekGame(code)) { // Si lo encuentra, el puntero queda al inicio del registro
+            games.readInt();       // code
+            games.readUTF();       // título
+            games.readUTF();       // género
+            return games.readChar(); // sistema operativo
+        }
+        return 'L'; // Si no lo encuentra , 
     }
-    return 'L'; // Si no lo encuentra , 
-}
 
 }
