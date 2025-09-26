@@ -32,7 +32,6 @@ public class Principal extends JFrame {
         iniciarSesion.setBounds(250, 200, 200, 50);
         iniciarSesion.setFont(new Font("Arial", Font.BOLD, 20));
         iniciarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        iniciarSesion.setBackground(new Color(70, 130, 180));
         iniciarSesion.setForeground(Color.BLACK);
         iniciarSesion.setFocusPainted(false);
         iniciarSesion.addActionListener(e -> iniciarSesionAction());
@@ -40,7 +39,6 @@ public class Principal extends JFrame {
         registrarse.setBounds(250, 280, 200, 50);
         registrarse.setFont(new Font("Arial", Font.BOLD, 20));
         registrarse.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        registrarse.setBackground(new Color(60, 179, 113));
         registrarse.setForeground(Color.BLACK);
         registrarse.setFocusPainted(false);
         registrarse.addActionListener(e -> registrarseAction());
@@ -48,7 +46,6 @@ public class Principal extends JFrame {
         salir.setBounds(250, 360, 200, 50);
         salir.setFont(new Font("Arial", Font.BOLD, 20));
         salir.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        salir.setBackground(new Color(220, 20, 60));
         salir.setForeground(Color.BLACK);
         salir.setFocusPainted(false);
         salir.addActionListener(e -> salirAction());
@@ -66,8 +63,8 @@ public class Principal extends JFrame {
     }
 
     private void registrarseAction() {
-        // new Registro().setVisible(true);
-        // dispose();
+        new Registro().setVisible(true);
+        dispose();
     }
 
     private void salirAction() {
