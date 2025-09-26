@@ -84,14 +84,30 @@ public class generadorArchivos {
     }
 
     private int getCode() throws IOException {
-        codigos.seek(0);//Inicio archivo
+        codigos.seek(1);//
         int code = codigos.readInt();
         codigos.seek(0);
         codigos.writeInt(code + 1);
         return code;
     }
 
-    public void crearUsuario(String username, String password, String nombre, long nacimiento, String path, char tipoUsuario) throws IOException {
+    private int getCodeJuegos() throws IOException {
+        codigos.seek(0);
+        int code = codigos.readInt();
+        codigos.seek(0);
+        codigos.writeInt(code + 1);
+        return code;
+    }
+
+    private int getDownloadsGlobales() throws IOException {
+        codigos.seek(2);
+        int code = codigos.readInt();
+        codigos.seek(2);
+        codigos.writeInt(code + 1);
+        return code;
+    }
+
+    public void crearUsuario(String username, String password, String nombre, long nacimiento, String path, String tipoUsuario) throws IOException {
         //Lo pone al final del archivo
         usuarios.seek(usuarios.length());//Pone al final del archivo
         usuarios.writeInt(getCode());
@@ -101,24 +117,79 @@ public class generadorArchivos {
         usuarios.writeLong(nacimiento);
         usuarios.writeInt(0);//Supongo que cantidad de descargas
         usuarios.writeUTF(path);
-        usuarios.writeChar(tipoUsuario);
+        usuarios.writeUTF(tipoUsuario);
         usuarios.writeBoolean(true);//Activo o inactivo el usuario
     }
 
     private boolean seekUser(String username) throws IOException {
         usuarios.seek(0);//Principio
-        long pos = 0;
+
         while (usuarios.getFilePointer() < usuarios.length()) {
-            pos = usuarios.getFilePointer();
+
+            Long pos = usuarios.getFilePointer();
             usuarios.readInt();
+
             if (usuarios.readUTF().equalsIgnoreCase(username)) {
                 usuarios.seek(pos);
                 return true;
             }
+            //Leer resto de cosas
+            usuarios.readUTF();
+            ////password
+            usuarios.readUTF();//nombre
+            usuarios.readLong();//nacimiento
+            usuarios.readInt();//cantidad descargas
+            usuarios.readUTF();//path
+            usuarios.readUTF();//tipouser
+            usuarios.readBoolean();//Boolean
         }
         return false;
 
     }
-    
+
+    public boolean login(String username, String password) throws IOException {
+        if (seekUser(username)) {
+            usuarios.readUTF();
+            usuarios.readUTF();
+            //Consume los anteriores al code
+            if (usuarios.readUTF().equals(password)) {
+                return true;
+            }
+            System.out.println("Encontro al usuario pero la contra era mala");
+        }
+        System.out.println("No encuentro al usuario");
+        return false;//Por si no lo encontro
+    }
+
+    public void addDownloadJugador(String username) throws IOException {
+        if (seekUser(username)) {
+            usuarios.readInt();//code
+            usuarios.readUTF();//username
+            usuarios.readUTF();//password
+            usuarios.readUTF();//nombre
+            usuarios.readLong();//nacimiento
+            long pos = usuarios.getFilePointer();
+            int down = usuarios.readInt();
+            usuarios.seek(pos);
+            usuarios.writeInt(down + 1);//Supongo que cantidad de descargas del user
+        }
+    }
+
+    public void cambiarEstadoJugador(String username) throws IOException {
+        if (seekUser(username)) {
+            usuarios.skipBytes(4);//Int
+            usuarios.readUTF();//username
+            usuarios.readUTF();
+            ///password
+            usuarios.readUTF();//nombre
+            usuarios.skipBytes(12);//Int + Long
+            usuarios.readUTF();//path
+            usuarios.readUTF();//tipouser
+            Long pos = usuarios.getFilePointer();
+            boolean bool = usuarios.readBoolean();//Boolean
+            usuarios.seek(pos);
+            usuarios.writeBoolean(!bool);//lo opuesto a bool
+        }
+    }
 
 }
