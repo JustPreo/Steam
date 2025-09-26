@@ -17,7 +17,7 @@ import java.util.Date;
 public class Steam {
 
     RandomAccessFile codigos;
-    RandomAccessFile games;
+    public RandomAccessFile games;
     RandomAccessFile usuarios;
     File file;
 
