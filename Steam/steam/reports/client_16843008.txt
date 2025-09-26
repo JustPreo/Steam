@@ -1,6 +1,6 @@
-REPORTE CLIENTE: aaron1 (username: aaron1)
+REPORTE CLIENTE: Fernando Madrid (username: fercho)
 Código cliente: 16843008
-Fecha de nacimiento: 2025-09-17
+Fecha de nacimiento: 2006-11-04
 Estado: ACTIVO
 Total downloads: 0
 HISTORIAL DE DESCARGAS:

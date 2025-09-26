@@ -1,12 +1,32 @@
 package steam.Screens.Usuario;
 
 import java.awt.*;
+import java.io.IOException;
 import javax.swing.*;
 import steam.Screens.Main;
+import steam.Screens.Usuario.UserOptions.Descargas;
+import steam.Screens.Usuario.UserOptions.Perfil;
+import steam.Screens.Usuario.UserOptions.VerCatalogo;
+import steam.Steam;
 
 public class UserMenu extends JFrame {
+    
+    private String loggedInUsername;
+    private int loggedInUserCode; 
+    private Steam steam;
 
-    public UserMenu() {
+    public UserMenu(String username) {
+        this.loggedInUsername = username;
+        this.steam = new Steam();
+        
+        try {
+            this.loggedInUserCode = steam.getUserCode(this.loggedInUsername);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error crítico al obtener datos del usuario.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+        
         initVentana();
         initComponentes();
     }
@@ -63,15 +83,15 @@ public class UserMenu extends JFrame {
     }
     //asaas 
     private void verCatalogoAction() {
-        // new Catalogo().setVisible(true);
+        new VerCatalogo().setVisible(true);
     }
 
     private void descargarAction() {
-        // new Descargas().setVisible(true);
+        new Descargas(loggedInUserCode).setVisible(true);
     }
 
     private void verPerfilAction() {
-        // new Perfil().setVisible(true);
+        new Perfil(loggedInUserCode).setVisible(true);
     }
 
     private void cerrarSesionAction() {
@@ -110,8 +130,4 @@ public class UserMenu extends JFrame {
             g2d.fillRect(0, 0, getWidth(), getHeight());
         }
     };
-
-    public static void main(String[] args) {
-        new UserMenu().setVisible(true);
-    }
 }

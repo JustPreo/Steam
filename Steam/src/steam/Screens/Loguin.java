@@ -111,7 +111,7 @@ public class Loguin extends JFrame {
                     new AdminMenu().setVisible(true);
 
                 } else {
-                    new UserMenu().setVisible(true);
+                    new UserMenu(user).setVisible(true);
                 }
                 dispose();
 
