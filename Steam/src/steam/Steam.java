@@ -143,10 +143,105 @@ public class Steam {
     }
 
     
-    public void downloadGame(int gameCode, int clientCode, char sistemaOperativo)
-    {
-    
+    public boolean downloadGame(int gameCode, int clientCode, char sistemaOperativoCliente) throws IOException {
+    // ✅ Verificar que el juego exista
+    if (!seekGame(gameCode)) {
+        System.out.println("El juego no existe");
+        return false;
     }
+
+    // Guardamos datos del juego
+    games.readInt(); // code
+    String tituloJuego = games.readUTF();
+    games.readUTF(); // genero
+    char OSJuego = games.readChar();
+    int edadMinima = games.readInt();
+    double precio = games.readDouble();
+    long posContadorGame = games.getFilePointer(); // para actualizar luego
+    int contadorDownloadsGame = games.readInt();
+    String pathImage = games.readUTF();
+
+    // ✅ Verificar compatibilidad del sistema operativo
+    if (OSJuego != sistemaOperativoCliente) {
+        System.out.println("Sistema operativo incompatible");
+        return false;
+    }
+
+    // ✅ Buscar cliente por código
+    if (!seekUserByCode(clientCode)) {
+        System.out.println("Cliente no encontrado");
+        return false;
+    }
+
+    usuarios.readInt(); // code
+    String username = usuarios.readUTF();
+    usuarios.readUTF(); // password
+    String nombre = usuarios.readUTF();
+    long nacimiento = usuarios.readLong();
+    long posContadorUser = usuarios.getFilePointer();
+    int contadorDownloadsUser = usuarios.readInt();
+    usuarios.readUTF(); // path
+    usuarios.readUTF(); // tipoUsuario
+    boolean estado = usuarios.readBoolean();
+
+    if (!estado) {
+        System.out.println("El usuario está inactivo");
+        return false;
+    }
+
+    // ✅ Calcular edad actual
+    long edadMillis = System.currentTimeMillis() - nacimiento;
+    int edadAnios = (int) (edadMillis / (1000L * 60 * 60 * 24 * 365));
+    if (edadAnios < edadMinima) {
+        System.out.println("El usuario no cumple con la edad mínima (" + edadMinima + ")");
+        return false;
+    }
+
+    // ✅ Si pasa todas las verificaciones, crear la descarga
+    int downloadCode = getDownloadsGlobales();
+    String fileName = "steam/downloads/download_" + downloadCode + ".stm";
+    File f = new File(fileName);
+    RandomAccessFile downloadFile = new RandomAccessFile(f, "rw");
+
+    long fecha = System.currentTimeMillis();
+
+    downloadFile.writeInt(downloadCode);
+    downloadFile.writeInt(clientCode);
+    downloadFile.writeUTF(username);
+    downloadFile.writeInt(gameCode);
+    downloadFile.writeUTF(tituloJuego);
+    downloadFile.writeUTF(pathImage); // path de imagen
+    downloadFile.writeDouble(precio);
+    downloadFile.writeLong(fecha);
+    downloadFile.close();
+
+    // ✅ Actualizar contadores
+    // Juego
+    games.seek(posContadorGame);
+    games.writeInt(contadorDownloadsGame + 1);
+
+    // Usuario
+    usuarios.seek(posContadorUser);
+    usuarios.writeInt(contadorDownloadsUser + 1);
+
+    // Mostrar simulación de descarga (en consola)
+    System.out.println("Descargando...");
+    for (int i = 0; i <= 100; i += 25) {
+        try {
+            Thread.sleep(200); // Simula el progreso
+        } catch (InterruptedException ex) {}
+        System.out.println("Progreso: " + i + "%");
+    }
+
+    System.out.println("Descarga completada");
+    System.out.println("FECHA: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date(fecha)));
+    System.out.println("Download #" + downloadCode);
+    System.out.println(nombre + " ha bajado " + tituloJuego + " a un precio de $" + precio);
+
+    return true;
+}
+    
+    
 
     private boolean seekUser(String username) throws IOException {
         usuarios.seek(0);//Principio
@@ -243,5 +338,15 @@ public class Steam {
         codigos.writeInt(code + 1);
         return code;
     }
+    
+    public char getSistemaOperativo(int code) throws IOException {
+    if (seekGame(code)) { // Si lo encuentra, el puntero queda al inicio del registro
+        games.readInt();       // code
+        games.readUTF();       // título
+        games.readUTF();       // género
+        return games.readChar(); // sistema operativo
+    }
+    return 'L'; // Si no lo encuentra , 
+}
 
 }
