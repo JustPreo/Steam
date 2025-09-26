@@ -36,7 +36,6 @@ public class Loguin extends JFrame {
 
         usuario.setBounds(200, 185, 300, 40);
         usuario.setFont(new Font("Arial", Font.PLAIN, 16));
-        usuario.setBackground(new Color(255, 255, 255, 200));
 
         passText.setBounds(200, 250, 300, 30);
         passText.setText("CONTRASEÑA:");
@@ -45,7 +44,6 @@ public class Loguin extends JFrame {
 
         password.setBounds(200, 285, 300, 40);
         password.setFont(new Font("Arial", Font.PLAIN, 16));
-        password.setBackground(new Color(255, 255, 255, 200));
 
         aceptar.setBounds(200, 360, 300, 45);
         aceptar.setFont(new Font("Arial", Font.BOLD, 20));
