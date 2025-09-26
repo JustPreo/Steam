@@ -29,7 +29,7 @@ public class Main extends JFrame {
         titulo.setForeground(Color.WHITE);
         titulo.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // aa
+        // aaaaa
         iniciarSesion.setBounds(250, 200, 200, 50);
         iniciarSesion.setFont(new Font("Arial", Font.BOLD, 20));
         iniciarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));

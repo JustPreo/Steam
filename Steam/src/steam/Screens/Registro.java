@@ -243,6 +243,7 @@ public class Registro extends JFrame {
     private final JLabel imagenLabel = new JLabel();
     private File imagenSeleccionada = null;
 
+    //aaaa
     private final JPanel panel = new JPanel() {
         @Override
         protected void paintComponent(Graphics g) {
