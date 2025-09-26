@@ -3,6 +3,7 @@ package steam.Screens.Usuario;
 import java.awt.*;
 import javax.swing.*;
 import steam.Screens.Main;
+import steam.Steam;
 
 public class AdminMenu extends JFrame {
 
@@ -63,7 +64,8 @@ public class AdminMenu extends JFrame {
     }
     //asaas 
     private void gestionJuegosAction() {
-        // new Catalogo().setVisible(true);
+        new GestionJuegos(new Steam()).setVisible(true);
+        dispose();
     }
 
     private void gestionJugadoresAction() {
