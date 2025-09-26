@@ -144,100 +144,88 @@ public class Steam {
 
     
     public boolean downloadGame(int gameCode, int clientCode, char sistemaOperativoCliente) throws IOException {
-    // ✅ Verificar que el juego exista
+    // Verificar que el juego exista
     if (!seekGame(gameCode)) {
         System.out.println("El juego no existe");
         return false;
     }
-
-    // Guardamos datos del juego
+    
+    long posInicioGame = games.getFilePointer(); // Guardar pos para luego actualizar contador
     games.readInt(); // code
     String tituloJuego = games.readUTF();
     games.readUTF(); // genero
-    char OSJuego = games.readChar();
+    char osJuego = games.readChar();
     int edadMinima = games.readInt();
     double precio = games.readDouble();
-    long posContadorGame = games.getFilePointer(); // para actualizar luego
-    int contadorDownloadsGame = games.readInt();
-    String pathImage = games.readUTF();
+    long posContadorGame = games.getFilePointer(); // Para actualizar luego
+    int contadorGame = games.readInt();
+    String pathImagen = games.readUTF(); // ruta de imagen
 
-    // ✅ Verificar compatibilidad del sistema operativo
-    if (OSJuego != sistemaOperativoCliente) {
-        System.out.println("Sistema operativo incompatible");
+    // Verificar compatibilidad del sistema operativo
+    if (osJuego != sistemaOperativoCliente) {
+        System.out.println("El juego no es compatible con el sistema operativo del cliente");
         return false;
     }
 
-    // ✅ Buscar cliente por código
-    if (!seekUserByCode(clientCode)) {
-        System.out.println("Cliente no encontrado");
+    // Verificar que el cliente exista
+    if (!seekUserCode(clientCode)) {
+        System.out.println("El cliente no existe.");
         return false;
     }
 
+    long posInicioUser = usuarios.getFilePointer(); // Guardar pos para actualizar contador
     usuarios.readInt(); // code
     String username = usuarios.readUTF();
     usuarios.readUTF(); // password
     String nombre = usuarios.readUTF();
     long nacimiento = usuarios.readLong();
-    long posContadorUser = usuarios.getFilePointer();
-    int contadorDownloadsUser = usuarios.readInt();
+    long posContadorUser = usuarios.getFilePointer(); // Para actualizar luego
+    int contadorUser = usuarios.readInt();
     usuarios.readUTF(); // path
     usuarios.readUTF(); // tipoUsuario
     boolean estado = usuarios.readBoolean();
 
     if (!estado) {
-        System.out.println("El usuario está inactivo");
+        System.out.println("El usuario está inactvio");
         return false;
     }
 
-    // ✅ Calcular edad actual
-    long edadMillis = System.currentTimeMillis() - nacimiento;
-    int edadAnios = (int) (edadMillis / (1000L * 60 * 60 * 24 * 365));
+    // Verificar edad mínima
+    long edadMilis = System.currentTimeMillis() - nacimiento;
+    int edadAnios = (int) (edadMilis / (1000L * 60 * 60 * 24 * 365));
     if (edadAnios < edadMinima) {
-        System.out.println("El usuario no cumple con la edad mínima (" + edadMinima + ")");
+        System.out.println("El usuario no cumple la edad minima requerida (" + edadMinima + ")");
         return false;
     }
 
-    // ✅ Si pasa todas las verificaciones, crear la descarga
-    int downloadCode = getDownloadsGlobales();
-    String fileName = "steam/downloads/download_" + downloadCode + ".stm";
-    File f = new File(fileName);
-    RandomAccessFile downloadFile = new RandomAccessFile(f, "rw");
+    // Si todo se cumple, crear el archivo de descarga
+    int downloadCode = getDownloadsGlobales(); // Genera code
+    String nombreArchivo = "steam/downloads/download_" + downloadCode + ".stm";
+    File fileDescarga = new File(nombreArchivo);
 
-    long fecha = System.currentTimeMillis();
+    RandomAccessFile downloadFile = new RandomAccessFile(fileDescarga, "rw");
+    long fechaActual = System.currentTimeMillis();
 
     downloadFile.writeInt(downloadCode);
     downloadFile.writeInt(clientCode);
-    downloadFile.writeUTF(username);
+    downloadFile.writeUTF(nombre);
     downloadFile.writeInt(gameCode);
     downloadFile.writeUTF(tituloJuego);
-    downloadFile.writeUTF(pathImage); // path de imagen
+    downloadFile.writeUTF(pathImagen); // Guardamos el path de la imagen
     downloadFile.writeDouble(precio);
-    downloadFile.writeLong(fecha);
+    downloadFile.writeLong(fechaActual);
     downloadFile.close();
 
-    // ✅ Actualizar contadores
-    // Juego
+    // Actualizar contador de descargas del juego
     games.seek(posContadorGame);
-    games.writeInt(contadorDownloadsGame + 1);
+    games.writeInt(contadorGame + 1);
 
-    // Usuario
+    // Actualizar contador de descargas del usuario
     usuarios.seek(posContadorUser);
-    usuarios.writeInt(contadorDownloadsUser + 1);
+    usuarios.writeInt(contadorUser + 1);
 
-    // Mostrar simulación de descarga (en consola)
-    System.out.println("Descargando...");
-    for (int i = 0; i <= 100; i += 25) {
-        try {
-            Thread.sleep(200); // Simula el progreso
-        } catch (InterruptedException ex) {}
-        System.out.println("Progreso: " + i + "%");
-    }
-
-    System.out.println("Descarga completada");
-    System.out.println("FECHA: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date(fecha)));
-    System.out.println("Download #" + downloadCode);
-    System.out.println(nombre + " ha bajado " + tituloJuego + " a un precio de $" + precio);
-
+    System.out.println("Descarga generada correctamente: " + nombreArchivo);
+    System.out.println("Download numero " + downloadCode + " | " + nombre + " descargaste " + tituloJuego + " a $" + precio);
     return true;
 }
     
@@ -268,6 +256,27 @@ public class Steam {
         return false;
 
     }
+    
+    private boolean seekUserCode(int code) throws IOException {//Lo mismo que arriba pero con codigo
+    usuarios.seek(0);
+    while (usuarios.getFilePointer() < usuarios.length()) {
+        long pos = usuarios.getFilePointer();
+        int current = usuarios.readInt();
+        if (current == code) {
+            usuarios.seek(pos);
+            return true;
+        }
+        usuarios.readUTF(); // username
+        usuarios.readUTF(); // password
+        usuarios.readUTF(); // nombre
+        usuarios.readLong(); // nacimiento
+        usuarios.readInt(); // contador
+        usuarios.readUTF(); // path
+        usuarios.readUTF(); // tipo
+        usuarios.readBoolean(); // estado
+    }
+    return false;
+}
 
     public boolean login(String username, String password) throws IOException {
         if (seekUser(username)) {
