@@ -13,7 +13,7 @@ import java.io.RandomAccessFile;
  * @author user
  */
 public class Steam {
-    
+
     RandomAccessFile codigos;
     RandomAccessFile games;
     RandomAccessFile usuarios;
@@ -59,24 +59,28 @@ public class Steam {
             games = new RandomAccessFile("steam/games.stm", "rw");
             usuarios = new RandomAccessFile("steam/usuarios.stm", "rw");
             initCodes();
-            
+
         } catch (IOException e) {
             System.out.println("Error de archivos!");
-            
+
         }
-        
+
     }
-    
+
     private void inicializarCarpeta() {
         file = new File("steam/downloads");
         if (!file.exists()) {
             file.mkdirs();
         }
-        
+
     }
-    
-    public void addPlayer(String username, String password, String nombre, long nacimiento, String path, String tipoUsuario) throws IOException {
+
+    public boolean addPlayer(String username, String password, String nombre, long nacimiento, String path, String tipoUsuario) throws IOException {
         //Lo pone al final del archivo
+        if (seekUser(username)) {
+            return false;
+        }
+
         usuarios.seek(usuarios.length());//Pone al final del archivo
         usuarios.writeInt(getCode());
         usuarios.writeUTF(username);
@@ -87,8 +91,10 @@ public class Steam {
         usuarios.writeUTF(path);
         usuarios.writeUTF(tipoUsuario);
         usuarios.writeBoolean(true);//Activo o inactivo el usuario
+
+        return true;
     }
-    
+
     private void initCodes() throws IOException {
         if (codigos.length() == 0) {
             codigos.writeInt(1);//Juegos
@@ -96,11 +102,14 @@ public class Steam {
             codigos.writeInt(1);//Downloads globales supongo
         }
     }
-    
-    public void addGame(String code, String titulo, String genero, char OS, int edadMinima, double precio, String path) throws IOException {
-        games.seek(games.length());//ADD AL FINAL DE TODO
 
-        games.writeInt(0);//cODE
+    public boolean addGame(String titulo, String genero, char OS, int edadMinima, double precio, String path) throws IOException {
+        int code = getCodeJuegos();
+        if (seekGame(code)) {
+            return false;
+        }
+        games.seek(games.length());//ADD AL FINAL DE TODO
+        games.writeInt(code);//cODE
         games.writeUTF(titulo);//TITULO
         games.writeUTF(genero);//GENERO
         games.writeChar(OS);//OS
@@ -108,9 +117,10 @@ public class Steam {
         games.writeDouble(precio);//PRECIO
         games.writeInt(0);//CONTADORDOWNLOADS
         games.writeUTF(path);//PATH
+        return true;
 
     }
-    
+
     public boolean seekGame(int code) throws IOException {
         games.seek(0);
         while (games.getFilePointer() < games.length()) {
@@ -126,44 +136,26 @@ public class Steam {
             games.readDouble();//PRECIO
             games.readInt();//CONTADORDOWNLOADS
             games.readUTF();//PATH
-            
+
         }
         return false;
-        
+
     }
+
     
-    private int getCode() throws IOException {
-        codigos.seek(1);//
-        int code = codigos.readInt();
-        codigos.seek(0);
-        codigos.writeInt(code + 1);
-        return code;
+    public void downloadGame(int gameCode, int clientCode, char sistemaOperativo)
+    {
+    
     }
-    
-    private int getCodeJuegos() throws IOException {
-        codigos.seek(0);
-        int code = codigos.readInt();
-        codigos.seek(0);
-        codigos.writeInt(code + 1);
-        return code;
-    }
-    
-    private int getDownloadsGlobales() throws IOException {
-        codigos.seek(2);
-        int code = codigos.readInt();
-        codigos.seek(2);
-        codigos.writeInt(code + 1);
-        return code;
-    }
-    
+
     private boolean seekUser(String username) throws IOException {
         usuarios.seek(0);//Principio
 
         while (usuarios.getFilePointer() < usuarios.length()) {
-            
+
             Long pos = usuarios.getFilePointer();
             usuarios.readInt();
-            
+
             if (usuarios.readUTF().equalsIgnoreCase(username)) {
                 usuarios.seek(pos);
                 return true;
@@ -179,9 +171,9 @@ public class Steam {
             usuarios.readBoolean();//Boolean
         }
         return false;
-        
+
     }
-    
+
     public boolean login(String username, String password) throws IOException {
         if (seekUser(username)) {
             usuarios.readUTF();
@@ -195,7 +187,7 @@ public class Steam {
         System.out.println("No encuentro al usuario");
         return false;//Por si no lo encontro
     }
-    
+
     public void addDownloadJugador(String username) throws IOException {
         if (seekUser(username)) {
             usuarios.readInt();//code
@@ -209,7 +201,7 @@ public class Steam {
             usuarios.writeInt(down + 1);//Supongo que cantidad de descargas del user
         }
     }
-    
+
     public void cambiarEstadoJugador(String username) throws IOException {
         if (seekUser(username)) {
             usuarios.skipBytes(4);//Int
@@ -227,9 +219,29 @@ public class Steam {
         }
     }
     
-    public void modificarJugador(String usernameOriginal , String username, String password, String nombre, long nacimiento, String path, String tipoUsuario)
-    {
     
+    private int getCode() throws IOException {
+        codigos.seek(1);//
+        int code = codigos.readInt();
+        codigos.seek(0);
+        codigos.writeInt(code + 1);
+        return code;
     }
-    
+
+    private int getCodeJuegos() throws IOException {
+        codigos.seek(0);
+        int code = codigos.readInt();
+        codigos.seek(0);
+        codigos.writeInt(code + 1);
+        return code;
+    }
+
+    private int getDownloadsGlobales() throws IOException {
+        codigos.seek(2);
+        int code = codigos.readInt();
+        codigos.seek(2);
+        codigos.writeInt(code + 1);
+        return code;
+    }
+
 }
