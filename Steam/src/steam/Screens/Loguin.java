@@ -4,18 +4,21 @@ import java.awt.*;
 import javax.swing.*;
 import steam.Steam;
 import java.io.IOException;
+import steam.Screens.Usuario.AdminMenu;
+import steam.Screens.Usuario.UserMenu;
 
 public class Loguin extends JFrame {
+
     private Steam steamManager;
 
     public Loguin() {
         try {
             steamManager = new Steam();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, 
-                "Error al inicializar el sistema: " + e.getMessage(),
-                "ERROR CRÍTICO", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                    "Error al inicializar el sistema: " + e.getMessage(),
+                    "ERROR CRÍTICO",
+                    JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
         initVentana();
@@ -96,29 +99,33 @@ public class Loguin extends JFrame {
         try {
             // Usar el método login de la clase Steam
             boolean loginExitoso = steamManager.login(user, pass);
-            
+
             if (loginExitoso) {
                 JOptionPane.showMessageDialog(this,
                         "¡Bienvenido a STEAMTEC " + user + "!",
                         "INICIO DE SESION EXITOSO",
                         JOptionPane.INFORMATION_MESSAGE);
-                
-                // Aquí puedes abrir la ventana principal del usuario
-                // new VentanaPrincipal(user).setVisible(true);
-                if (steamManager.getTipoUsuario(user))
+
+                // 
+                if (steamManager.getTipoUsuario(user)) {
+                    new AdminMenu().setVisible(true);
+
+                } else {
+                    new UserMenu().setVisible(true);
+                }
                 dispose();
-                
+
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Usuario o contraseña incorrectos!",
                         "ERROR DE AUTENTICACIÓN",
                         JOptionPane.ERROR_MESSAGE);
-                
+
                 // Limpiar campos por seguridad
                 password.setText("");
                 usuario.requestFocus();
             }
-            
+
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
                     "Error al acceder al sistema: " + e.getMessage(),

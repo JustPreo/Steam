@@ -481,7 +481,6 @@ public class Steam {
         // Devuelve true zi es ADMIN, false si es NORMAL
         return tipoUsuario.equalsIgnoreCase("ADMIN");
     }
-    // Si no se encuentra el usuario, puedes lanzar excepción o devolver false
     return false;
 }
 
