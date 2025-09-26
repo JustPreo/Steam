@@ -2,10 +2,22 @@ package steam.Screens;
 
 import java.awt.*;
 import javax.swing.*;
+import steam.Steam;
+import java.io.IOException;
 
 public class Loguin extends JFrame {
+    private Steam steamManager;
 
     public Loguin() {
+        try {
+            steamManager = new Steam();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, 
+                "Error al inicializar el sistema: " + e.getMessage(),
+                "ERROR CRÍTICO", 
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
         initVentana();
         initComponentes();
     }
@@ -70,7 +82,7 @@ public class Loguin extends JFrame {
     }
 
     private void loginAction() {
-        String user = usuario.getText();
+        String user = usuario.getText().trim();
         String pass = new String(password.getPassword());
 
         if (user.isEmpty() || pass.isEmpty()) {
@@ -81,16 +93,40 @@ public class Loguin extends JFrame {
             return;
         }
 
-        if (user.equals("admin") && pass.equals("admin")) {
+        try {
+            // Usar el método login de la clase Steam
+            boolean loginExitoso = steamManager.login(user, pass);
+            
+            if (loginExitoso) {
+                JOptionPane.showMessageDialog(this,
+                        "¡Bienvenido a STEAMTEC " + user + "!",
+                        "INICIO DE SESION EXITOSO",
+                        JOptionPane.INFORMATION_MESSAGE);
+                
+                // Aquí puedes abrir la ventana principal del usuario
+                // new VentanaPrincipal(user).setVisible(true);
+                if (steamManager.getTipoUsuario(user))
+                dispose();
+                
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Usuario o contraseña incorrectos!",
+                        "ERROR DE AUTENTICACIÓN",
+                        JOptionPane.ERROR_MESSAGE);
+                
+                // Limpiar campos por seguridad
+                password.setText("");
+                usuario.requestFocus();
+            }
+            
+        } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
-                    "Bienvenido a STEAMTEC <user>!",
-                    "INICIO DE SESION EXITOSO",
-                    JOptionPane.INFORMATION_MESSAGE);
-            // new ventana().setVisible(true);
-            dispose();
-        } else {
+                    "Error al acceder al sistema: " + e.getMessage(),
+                    "ERROR DEL SISTEMA",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Usuario o contraseña incorrectos!",
+                    "Error inesperado: " + e.getMessage(),
                     "ERROR",
                     JOptionPane.ERROR_MESSAGE);
         }
@@ -123,7 +159,8 @@ public class Loguin extends JFrame {
     };
 
     public static void main(String[] args) {
-
-        new Loguin().setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            new Loguin().setVisible(true);
+        });
     }
 }

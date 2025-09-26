@@ -275,6 +275,7 @@ public class Steam {
 
             if (usuarios.readUTF().equalsIgnoreCase(username)) {
                 usuarios.seek(pos);
+                System.out.println("Si lo encontro");
                 return true;
             }
             //Leer resto de cosas
@@ -287,6 +288,7 @@ public class Steam {
             usuarios.readUTF();//tipouser
             usuarios.readBoolean();//Boolean
         }
+        System.out.println("No encontro");
         return false;
 
     }
@@ -314,7 +316,7 @@ public class Steam {
 
     public boolean login(String username, String password) throws IOException {
         if (seekUser(username)) {
-            usuarios.readUTF();
+            usuarios.readInt();
             usuarios.readUTF();
             //Consume los anteriores al code
             if (usuarios.readUTF().equals(password)) {
@@ -465,5 +467,22 @@ public class Steam {
         }
         return 'L'; // Si no lo encuentra , 
     }
+    
+    public boolean getTipoUsuario(String name) throws IOException {
+    if (seekUser(name)) {
+        usuarios.readInt();      // code
+        usuarios.readUTF();      // username
+        usuarios.readUTF();      // password
+        usuarios.readUTF();      // nombre
+        usuarios.readLong();     // nacimiento
+        usuarios.readInt();      // contador downloads
+        usuarios.readUTF();      // path
+        String tipoUsuario = usuarios.readUTF(); // tipoUsuario
+        // Devuelve true zi es ADMIN, false si es NORMAL
+        return tipoUsuario.equalsIgnoreCase("ADMIN");
+    }
+    // Si no se encuentra el usuario, puedes lanzar excepción o devolver false
+    return false;
+}
 
 }

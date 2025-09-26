@@ -1,0 +1,7 @@
+REPORTE CLIENTE: aaron1 (username: aaron1)
+Código cliente: 16843008
+Fecha de nacimiento: 2025-09-17
+Estado: ACTIVO
+Total downloads: 0
+HISTORIAL DE DESCARGAS:
+FECHA(YYYY-MM-DD) | DOWNLOAD ID | GAME CODE | GAME NAME | PRICE | GENRE

@@ -1,0 +1,7 @@
+REPORTE CLIENTE: aaron (username: aaron)
+Código cliente: 65792
+Fecha de nacimiento: 2025-09-04
+Estado: ACTIVO
+Total downloads: 0
+HISTORIAL DE DESCARGAS:
+FECHA(YYYY-MM-DD) | DOWNLOAD ID | GAME CODE | GAME NAME | PRICE | GENRE

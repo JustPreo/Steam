@@ -5,10 +5,26 @@ import javax.swing.*;
 import java.util.Date;
 import com.toedter.calendar.JDateChooser;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import steam.Steam;
 
 public class Registro extends JFrame {
+    private Steam steamManager;
 
     public Registro() {
+        try {
+            steamManager = new Steam();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, 
+                "Error al inicializar el sistema: " + e.getMessage(),
+                "ERROR CRÍTICO", 
+                JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
         initVentana();
         initComponentes();
     }
@@ -73,8 +89,8 @@ public class Registro extends JFrame {
         tipoUsuario.setBounds(50, 495, 300, 40);
         tipoUsuario.setFont(new Font("Arial", Font.PLAIN, 16));
         
-        tipoUsuario.addItem("Normal");
-        tipoUsuario.addItem("Administrador");
+        tipoUsuario.addItem("NORMAL");
+        tipoUsuario.addItem("ADMIN");
 
         imagenPanel.setBounds(493, 160, 270, 270);
         imagenPanel.setBackground(new Color(255, 255, 255, 50));
@@ -142,7 +158,7 @@ public class Registro extends JFrame {
             try {
                 ImageIcon originalIcon = new ImageIcon(selectedFile.getAbsolutePath());
                 Image scaledImage = originalIcon.getImage().getScaledInstance(
-                        300, 300, Image.SCALE_SMOOTH);
+                        270, 270, Image.SCALE_SMOOTH);
                 ImageIcon scaledIcon = new ImageIcon(scaledImage);
 
                 imagenLabel.setIcon(scaledIcon);
@@ -159,53 +175,143 @@ public class Registro extends JFrame {
         }
     }
 
+    private String guardarImagen(String username) {
+        if (imagenSeleccionada == null) {
+            return ""; // Sin imagen
+        }
+
+        try {
+            // Crear directorio de imágenes si no existe
+            File dirImagenes = new File("steam/images");
+            if (!dirImagenes.exists()) {
+                dirImagenes.mkdirs();
+            }
+
+            // Obtener la extensión del archivo original
+            String nombreOriginal = imagenSeleccionada.getName();
+            String extension = "";
+            int i = nombreOriginal.lastIndexOf('.');
+            if (i > 0) {
+                extension = nombreOriginal.substring(i);
+            }
+
+            // Crear nombre único para la imagen
+            String nombreDestino = "profile_" + username + "_" + System.currentTimeMillis() + extension;
+            Path destino = Paths.get("steam/images/" + nombreDestino);
+
+            // Copiar archivo
+            Files.copy(imagenSeleccionada.toPath(), destino, StandardCopyOption.REPLACE_EXISTING);
+
+            return destino.toString();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al guardar la imagen: " + e.getMessage(),
+                    "ERROR",
+                    JOptionPane.WARNING_MESSAGE);
+            return "";
+        }
+    }
+
     private void crearCuentaAction() {
         try {
-            String usernameStr = username.getText();
+            String usernameStr = username.getText().trim();
             String pass = new String(password.getPassword());
-            String nombreStr = nombre.getText();
-
+            String nombreStr = nombre.getText().trim();
             Date fechaNacimiento = dateChooser.getDate();
-            long nacimientoLong = 0;
+            String tipoUser = (String) tipoUsuario.getSelectedItem();
 
-            if (fechaNacimiento != null) {
-                nacimientoLong = fechaNacimiento.getTime();
-            }
-
-            if (usernameStr.isEmpty()
-                    || pass.isEmpty() || nombreStr.isEmpty() || fechaNacimiento == null) {
+            // Validaciones básicas
+            if (usernameStr.isEmpty() || pass.isEmpty() || nombreStr.isEmpty() || fechaNacimiento == null) {
                 JOptionPane.showMessageDialog(this,
-                        "Debe de llenar todos los campos!",
+                        "Debe de llenar todos los campos obligatorios!",
                         "ADVERTENCIA",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            if (imagenSeleccionada == null) {
+            // Validar que el username no tenga espacios
+            if (usernameStr.contains(" ")) {
                 JOptionPane.showMessageDialog(this,
-                        "Debe seleccionar una imagen de perfil!",
-                        "ADVERTENCIA",
-                        JOptionPane.WARNING_MESSAGE);
+                        "El username no puede contener espacios!",
+                        "ERROR DE VALIDACIÓN",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            JOptionPane.showMessageDialog(this,
-                    "Cuenta '"+usernameStr+"' fue creada exitosamente!\n",
-                    "REGISTRO EXITOSO",
-                    JOptionPane.INFORMATION_MESSAGE);
+            // Validar longitud de password
+            if (pass.length() < 4) {
+                JOptionPane.showMessageDialog(this,
+                        "La contraseña debe tener al menos 4 caracteres!",
+                        "ERROR DE VALIDACIÓN",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            limpiarCampos();
-            new Main().setVisible(true);
-            dispose();
+            // Validar que la fecha de nacimiento sea válida (no futura)
+            if (fechaNacimiento.after(new Date())) {
+                JOptionPane.showMessageDialog(this,
+                        "La fecha de nacimiento no puede ser futura!",
+                        "ERROR DE VALIDACIÓN",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-        } catch (NumberFormatException e) {
+            // Guardar imagen si fue seleccionada
+            String pathImagen = guardarImagen(usernameStr);
+            if (imagenSeleccionada != null && pathImagen.isEmpty()) {
+                // Si había imagen seleccionada pero no se pudo guardar, preguntar si continuar
+                int opcion = JOptionPane.showConfirmDialog(this,
+                        "No se pudo guardar la imagen. ¿Desea continuar sin imagen?",
+                        "PROBLEMA CON IMAGEN",
+                        JOptionPane.YES_NO_OPTION);
+                if (opcion != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
+            long nacimientoLong = fechaNacimiento.getTime();
+
+            // Intentar crear el usuario usando la clase Steam
+            boolean usuarioCreado = steamManager.addPlayer(
+                    usernameStr, 
+                    pass, 
+                    nombreStr, 
+                    nacimientoLong, 
+                    pathImagen, 
+                    tipoUser
+            );
+
+            if (usuarioCreado) {
+                JOptionPane.showMessageDialog(this,
+                        "¡Cuenta '" + usernameStr + "' creada exitosamente!\n" +
+                        "Tipo de usuario: " + tipoUser + "\n" +
+                        (pathImagen.isEmpty() ? "Sin imagen de perfil" : "Con imagen de perfil"),
+                        "REGISTRO EXITOSO",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                limpiarCampos();
+                new Main().setVisible(true);
+                dispose();
+                
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "El username '" + usernameStr + "' ya existe!\n" +
+                        "Por favor, elija otro nombre de usuario.",
+                        "ERROR DE REGISTRO",
+                        JOptionPane.ERROR_MESSAGE);
+                username.requestFocus();
+                username.selectAll();
+            }
+
+        } catch (IOException e) {
             JOptionPane.showMessageDialog(this,
-                    "El codigo debe ser un número valido!",
-                    "ERROR",
+                    "Error al acceder al sistema de archivos: " + e.getMessage(),
+                    "ERROR DEL SISTEMA",
                     JOptionPane.ERROR_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Error al crear la cuenta: " + e.getMessage(),
+                    "Error inesperado al crear la cuenta: " + e.getMessage(),
                     "ERROR",
                     JOptionPane.ERROR_MESSAGE);
         }
@@ -217,7 +323,7 @@ public class Registro extends JFrame {
         nombre.setText("");
         dateChooser.setDate(null);
         imagenLabel.setIcon(null);
-        imagenLabel.setText("<html><center>IMAGEN<br>SELECCIONADA</center></html>");
+        imagenLabel.setText("<html><center>SIN<br>IMAGEN</center></html>");
         imagenSeleccionada = null;
         tipoUsuario.setSelectedIndex(0);
     }
@@ -245,7 +351,6 @@ public class Registro extends JFrame {
     private final JLabel imagenLabel = new JLabel();
     private File imagenSeleccionada = null;
 
-    //aaaa
     private final JPanel panel = new JPanel() {
         @Override
         protected void paintComponent(Graphics g) {
@@ -260,6 +365,8 @@ public class Registro extends JFrame {
     };
 
     public static void main(String[] args) {
-        new Registro().setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            new Registro().setVisible(true);
+        });
     }
 }
